@@ -1,6 +1,7 @@
 entity Calendar {
 	startDate LocalDateTime required,
     endDate LocalDateTime required,
+    status CalendarState required,
     newPatientName String,
     newPatientPhoneNumber String,
     subject String required,
@@ -11,7 +12,7 @@ entity Patient {
 	name String required,
     surname1 String required,
     surname2 String,
-    cardId String,
+    cardId String required,
     nationality String,
     phoneNumber1 String required,
     phoneNumber2 String,
@@ -19,16 +20,19 @@ entity Patient {
     email2 String,
     addressLine1 String required,
     addressLine2 String,
-    town String,
+    town String required,
     cp String,
     birthdate LocalDate,
     occupation String,
+    creationDate LocalDate,
     comments String
 }
 
 entity PatientBackground {
 	name String required,
     medication String required,
+    isRelative Boolean,
+    relative String,
     comments String
 }
 
@@ -37,20 +41,12 @@ entity PatientAllergy {
     comments String
 }
 
-entity PatientFamilyBackground {
-	name String required,
-    comments String
-}
-
 entity PatientRecord {
 	date LocalDate required,
-    doctor String required,
-    treatment String required,
     debit BigDecimal required,
     assets BigDecimal required,
     balance BigDecimal required,
     creditCard Boolean,
-	name String required,
     comments String
 }
 
@@ -91,7 +87,8 @@ entity Odontogram {
     pathology String required,
     preTreatment Boolean,
     diagnosticDate LocalDate required,
-    treatmentDate LocalDate required
+    treatmentDate LocalDate required,
+    comments String
 }
 
 entity Inventory {
@@ -101,7 +98,7 @@ entity Inventory {
     expirationDate LocalDate required
 }
 
-entity InventoryMaterial {
+entity InventoryEntry {
 	name String required,
     comments String
 }
@@ -114,21 +111,25 @@ entity DentalDeposit {
 relationship OneToMany {
 	Patient{calendar} to Calendar,
     Patient{background} to PatientBackground,
-    Patient{familyBackground} to PatientFamilyBackground,
     Patient{allergy} to PatientAllergy,
     Patient{record} to PatientRecord,
+    Patient{odontogram} to Odontogram,
+    PatientRecord{odontogram} to Odontogram,
     PatientRecord{collaborator} to Collaborator,
     PatientRecord{laboratory} to Laboratory
 }
 
 relationship OneToOne {
-	Patient{odontogram} to Odontogram,
-    Inventory{material} to InventoryMaterial,
+    Inventory{inventoryEntry} to InventoryEntry,
     Inventory{dentalDeposit} to DentalDeposit
+}
+
+enum CalendarState {
+	CONFIRMED,
+    CONFIRMATION_PENDING,
+    CANCELLED
 }
 
 // Set pagination options
 paginate Calendar, Patient, PatientRecord, Odontogram with infinite-scroll
-paginate PatientBackground, PatientFamilyBackground, PatientAllergy, Collaborator, Laboratory, Inventory, InventoryMaterial, DentalDeposit with pagination
-
-dto * with mapstruct
+paginate PatientBackground, PatientAllergy, Collaborator, Laboratory, Inventory, InventoryEntry, DentalDeposit with pagination
