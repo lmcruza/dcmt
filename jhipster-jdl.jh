@@ -1,9 +1,11 @@
-entity Calendar {
-	startDate LocalDateTime required,
-    endDate LocalDateTime required,
-    newPatientName String,
-    newPatientPhoneNumber String,
-    subject String required,
+entity Doctor {
+	name String required,
+    surname1 String required,
+    surname2 String required,
+    cardId String required,
+    boardNumber String required,
+    isCollaborator Boolean,
+    speciality String,
     comments String
 }
 
@@ -13,22 +15,36 @@ entity Patient {
     surname2 String,
     cardId String,
     nationality String,
-    phoneNumber1 String required,
-    phoneNumber2 String,
-    email1 String,
-    email2 String,
-    addressLine1 String required,
-    addressLine2 String,
-    town String,
-    cp String,
     birthdate LocalDate,
     occupation String,
+    comments String
+}
+
+entity Address {
+    addressLine1 String required,
+    addressLine2 String,
+    town String required,
+    cp String
+}
+
+entity PhoneNumber {
+	number String required,
+    comments String
+}
+
+entity CalendarEvent {
+	startDate LocalDateTime required,
+    endDate LocalDateTime required,
+    patient String,
+    phoneNumber String,
+    subject String required,
     comments String
 }
 
 entity PatientBackground {
 	name String required,
     medication String required,
+    relative String,
     comments String
 }
 
@@ -37,67 +53,51 @@ entity PatientAllergy {
     comments String
 }
 
-entity PatientFamilyBackground {
-	name String required,
-    comments String
-}
-
 entity PatientRecord {
 	date LocalDate required,
-    doctor String required,
-    treatment String required,
     debit BigDecimal required,
     assets BigDecimal required,
-    balance BigDecimal required,
+    balance BigDecimal,
     creditCard Boolean,
+    comments String
+}
+
+entity Treatment {
 	name String required,
     comments String
 }
 
-entity Collaborator {
+entity Pathology {
 	name String required,
-    surname1 String required,
-    surname2 String,
-    cardId String,
-    collegiateNumber String,
-    phoneNumber1 String required,
-    phoneNumber2 String,
-    email1 String,
-    email2 String,
-    addressLine1 String required,
-    addressLine2 String,
-    town String,
-    cp String,
     comments String
 }
 
-entity Laboratory {
-	name String required,
-    laboratoryId String,
-    phoneNumber1 String required,
-    phoneNumber2 String,
-    email1 String,
-    email2 String,
-    addressLine1 String required,
-    addressLine2 String,
-    town String,
-    cp String,
-    comments String
-}
-
-entity Odontogram {
+entity OdontogramEntry {
 	startTooth Integer required,
     endTooth Integer,
-    pathology String required,
-    preTreatment Boolean,
+    isPretreatment Boolean,
     diagnosticDate LocalDate required,
     treatmentDate LocalDate required
 }
 
-entity Inventory {
+entity Laboratory {
+	name String required,
+    taxIdNumber String required,
+    isCif Boolean,
+    comments String
+}
+
+entity LaboratoryExpense {
+    debit BigDecimal required,
+    assets BigDecimal required,
+    balance BigDecimal,
+    comments String
+}
+
+entity InventoryEntry {
 	number Integer required,
     unitPrice BigDecimal required,
-    treatmentDate LocalDate required,
+    purchaseDate LocalDate required,
     expirationDate LocalDate required
 }
 
@@ -111,24 +111,36 @@ entity DentalDeposit {
     comments String
 }
 
-relationship OneToMany {
-	Patient{calendar} to Calendar,
-    Patient{background} to PatientBackground,
-    Patient{familyBackground} to PatientFamilyBackground,
-    Patient{allergy} to PatientAllergy,
-    Patient{record} to PatientRecord,
-    PatientRecord{collaborator} to Collaborator,
-    PatientRecord{laboratory} to Laboratory
+relationship OneToOne {
+    CalendarEvent{patient required} to Patient{calendarEvent},
+    PatientRecord{patient required} to Patient{patientRecord},
+    PatientRecord{doctor required} to Doctor{patientRecord},
+    PatientRecord{collaborator} to Collaborator{patientRecord},
+    OdontogramEntry{pathology} to Pathology,
+    InventoryEntry{material required} to InventoryMaterial,
+    InventoryEntry{dentalDeposit required} to DentalDeposit
 }
 
-relationship OneToOne {
-	Patient{odontogram} to Odontogram,
-    Inventory{material} to InventoryMaterial,
-    Inventory{dentalDeposit} to DentalDeposit
+relationship OneToMany {
+	Doctor{address(fullAddress) required} to Address{person required},
+	Doctor{phoneNumber(number) required} to PhoneNumber{person required},
+	Laboratory{address(fullAddress) required} to Address{laboratory required},
+	Laboratory{phoneNumber(number) required} to PhoneNumber{laboratory required},
+    CalendarEvent{doctor required} to Doctor{calendarEvent},
+    Patient{address(fullAddress)} to Address{person required},
+    Patient{phoneNumber(number) required} to PhoneNumber{person required},
+    Patient{background} to PatientBackground{person required},
+    Patient{allergy(name)} to PatientAllergy{person required},
+    Patient{record} to PatientRecord{patient required},
+    Patient{odontogram} to OdontogramEntry{patient required},
+    PatientRecord{treatment} to Treatment{patientRecord},
+    PatientRecord{laboratory} to LaboratoryExpense{patientRecord required},
+    PatientRecord{odontogram} to OdontogramEntry{patientRecord},
+    LaboratoryExpense{laboratory required} to Laboratory{expense}
 }
 
 // Set pagination options
-paginate Calendar, Patient, PatientRecord, Odontogram with infinite-scroll
-paginate PatientBackground, PatientFamilyBackground, PatientAllergy, Collaborator, Laboratory, Inventory, InventoryMaterial, DentalDeposit with pagination
+paginate Patient, CalendarEvent, PatientBackground, PatientAllergy, PatientRecord, Treatment, Pathology, OdontogramEntry with infinite-scroll
+paginate Doctor, Collaborator, Address, PhoneNumber, Laboratory, LaboratoryExpense, InventoryEntry, InventoryMaterial, DentalDeposit with pagination
 
-dto * with mapstruct
+//dto * with mapstruct
